@@ -2,9 +2,9 @@ const express = require("express");
 const logger = require("morgan");
 const mongoose = require("mongoose");
 
-const PORT = process.env.PORT || 8000;
-
+const PORT = process.env.PORT || 3001;
 const db = require("./models");
+
 
 const app = express();
 
@@ -17,26 +17,62 @@ app.use(express.static("public"));
 
 mongoose.connect(process.env.MONGODB_URI || "mongodb://localhost/workout", { useNewUrlParser: true });
 
-db.Workout.create()
-  .then(dbWorkout => {
-    console.log(dbWorkout);
+app.put("/api/workouts/:id", ({ body, params }, res) => {
+  db.Workout.findByIdAndUpdate(params.id,
+    { $push: { exercises: body } })
+    .then(dbWorkout => {
+      res.json(dbWorkout);
+    })
+    .catch(err => {
+      res.json(err);
+    });
+});
+
+//HTML ROUTES
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname + "./public/index.html"));
+});
+
+app.get("/stats", (req, res) => {
+  res.redirect("./stats.html");
+});
+
+app.get("/exercise", (req, res) => {
+  res.redirect("./exercise.html");
+});
+
+//API ROUTES
+app.get("/api/workouts/", (req, res) => {
+  db.Workout.find({})
+    .then(dbWorkout => {
+      res.json(dbWorkout);
+    })
+    .catch(err => {
+      console.log(err);
+    });
+});
+
+app.post("/api/workouts/", (req, res) => {
+  db.Workout.create({})
+    .then(dbWorkout => {
+      res.json(dbWorkout);
+    })
+    .catch(err => {
+      console.log(err);
+    });
+});
+
+app.get("/api/workouts/range", (req, res) => {
+  db.Workout.find({}, (err, data) => {
   })
-  .catch(({ message }) => {
-    console.log(message);
-  });
-
-  app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname + "./public/index.html"));
-  });
-
-  app.get("/stats", (req, res) => {
-    res.redirect("./stats.html");
-  });
-
-  app.get("/exercise", (req, res) => {
-    res.redirect("./exercise.html");
-  });
+    .then(dbWorkout => {
+      res.json(dbWorkout);
+    })
+    .catch(err => {
+      console.log(err);
+    })
+})
 
 app.listen(PORT, () => {
-    console.log(`App running on port ${PORT}!`);
-  });
+  console.log(`App running on port ${PORT}!`);
+});
